@@ -11,6 +11,7 @@ use WOWStudio\AccessibilityKit\Core\Registrable;
 use WOWStudio\AccessibilityKit\Scanner\RuleRegistry;
 use WOWStudio\AccessibilityKit\Support\Capabilities;
 use WOWStudio\AccessibilityKit\Support\ScannableTypes;
+use WP_Error;
 use WP_REST_Request;
 use WOWStudio\AccessibilityKit\Guidance\NextStep;
 use WP_REST_Response;
@@ -85,14 +86,35 @@ final class OverviewController implements Registrable {
 	}
 
 	/**
-	 * Whether the caller may read the summary.
+	 * Reports whether the caller may read findings.
 	 *
-	 * @since 0.16.0
+	 * VIEW_REPORTS, not RUN_SCAN. This asked for RUN_SCAN until the review
+	 * round for 1.0.4 caught it, and it was the odd one out: every other read
+	 * gate in this plugin — the dismissal log, the site fixes, the statement,
+	 * the scan results — asks for VIEW_REPORTS. Two controllers had drifted.
 	 *
-	 * @return bool
+	 * Harmless under the capabilities this plugin grants, since administrators
+	 * and editors hold both, and that is exactly why it survived: nothing
+	 * misbehaved. It stops being harmless the moment a site uses the
+	 * `wsak_role_capabilities` filter to let somebody run a scan without
+	 * granting them the site's whole accessibility report, which is a
+	 * distinction the two capabilities exist to make.
+	 *
+	 * @since 0.29.0
+	 * @since 1.0.4 Asks for the reports capability, and says so when refusing.
+	 *
+	 * @return bool|WP_Error
 	 */
-	public function can_read(): bool {
-		return current_user_can( Capabilities::RUN_SCAN );
+	public function can_read() {
+		if ( current_user_can( Capabilities::VIEW_REPORTS ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'wsak_forbidden',
+			__( 'You do not have permission to view accessibility reports.', 'wowstudio-accessibility-remediation' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
 	}
 
 	/**

@@ -37,6 +37,56 @@ keeping if it is true.
   Elementor was before 0.27.0. Avada, ACF and WooCommerce are untested. The way
   to find out is to build a page and scan it.
 
+## [1.0.4] - 2026-09-20
+
+The third WordPress.org review round. One finding, with two halves, and both
+were real.
+
+### Security
+
+- **Reading the findings report asked for the wrong capability.** Two
+  controllers gated reading on RUN_SCAN, which is the capability for starting a
+  scan, rather than VIEW_REPORTS. Every other read gate in the plugin — the
+  dismissal log, the site fixes, the statement, the scan results — asks for
+  VIEW_REPORTS; these two had drifted.
+
+  Nothing misbehaved, because the roles this plugin grants hold both
+  capabilities, and that is exactly why it survived. It stops being harmless the
+  moment a site uses `wsak_role_capabilities` to let somebody run a scan without
+  handing them the whole report, which is the distinction the two capabilities
+  exist to draw. Both now refuse with a message instead of a bare 401.
+
+  The review named one. The other was the same fault in the same shape, and
+  their email says plainly that they may not list every instance.
+
+- **Findings were reported for pages the reader may not be allowed to open.**
+  Scans only ever run on published posts and pages, so this is about what
+  happens afterwards: a page that was public when it was scanned and has since
+  been made private or pulled back to a draft still has findings on file, and
+  those carry its title and a fragment of its markup.
+
+  The review found it on `/issues/grouped`, whose page names came from a query
+  that read the issues table alone with no join to posts at all. It was equally
+  true of the findings list and the dismissal log. All three are restricted now,
+  in SQL rather than after the fact, so counts and pagination stay honest.
+
+  Somebody who may read private content still sees findings on private pages,
+  which is the point: the restriction has to narrow for the people it is about
+  and nobody else.
+
+### Added
+
+- **A test that reads the capability behind every REST gate.** There was already
+  one asserting that every route had a permission callback, and it passed
+  throughout — counting the locks is not the same as checking they fit. The new
+  one names all sixteen gates and the capability each must require, and it was
+  confirmed to fail when the original fault is put back.
+
+  It also corrects the older check, which compared callbacks against routes.
+  One `register_rest_route()` can declare a readable and a creatable method, and
+  each needs its own callback: thirty-three gates across twenty-nine routes is
+  right, not a surplus.
+
 ## [1.0.3] - 2026-09-19
 
 An audit before resubmitting, rather than a review round. Three real faults,

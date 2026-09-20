@@ -4,7 +4,7 @@ Tags: accessibility, wcag, a11y, alt text, accessibility scanner
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,10 @@ In WordPress's own alt text field on the media item. It therefore applies everyw
 7. The setup, on first activation. Three steps, none of them mandatory, and nothing switched on for you.
 
 == Changelog ==
+
+= 1.0.4 =
+* Fixed: viewing the findings report now requires the reports capability rather than the scanning one.
+* Fixed: findings are no longer listed for pages the viewer is not allowed to read, which could happen when a page was made private after being scanned.
 
 = 1.0.3 =
 * Fixed: choosing to delete plugin data on uninstall now removes all of it. Four settings were being left behind.

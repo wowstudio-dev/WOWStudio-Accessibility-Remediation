@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WOWStudio\AccessibilityKit\Tests\Unit;
 
+use Brain\Monkey\Functions;
 use Mockery;
 use WOWStudio\AccessibilityKit\Db\IssueRepository;
 use WOWStudio\AccessibilityKit\Tests\Doubles\FakeDecisionStore;
@@ -58,6 +59,12 @@ final class IssueRepositoryTest extends TestCase {
 		$this->wpdb         = Mockery::mock( 'wpdb' );
 		$this->wpdb->prefix = 'wp_';
 		$this->wpdb->posts  = 'wp_posts';
+
+		// Findings are restricted to pages the caller may read, so the queries
+		// ask what this one may see. The default here is the cautious answer —
+		// published only — and the test that cares about private pages says so
+		// for itself.
+		Functions\when( 'current_user_can' )->justReturn( false );
 
 		$this->wpdb->shouldReceive( 'prepare' )
 			->andReturnUsing(
@@ -165,21 +172,48 @@ final class IssueRepositoryTest extends TestCase {
 	}
 
 	/**
-	 * Findings against deleted content are left out.
+	 * Findings are limited to pages the caller may actually read.
 	 *
-	 * Their rows outlive the post, and sending somebody to an edit screen that
-	 * 404s is a worse answer than not listing the finding.
+	 * This asserted `p.ID IS NOT NULL` — that the page still exists — which the
+	 * status test now subsumes, because a deleted post has no row and therefore
+	 * no status to match. The stronger condition came out of the review round
+	 * for 1.0.4: existing is not the same as readable, and a page pulled back
+	 * to a draft after it was scanned still carries findings with its title and
+	 * a fragment of its markup on them.
 	 *
 	 * @return void
 	 */
-	public function test_findings_on_deleted_content_are_excluded(): void {
+	public function test_findings_are_limited_to_pages_the_caller_may_read(): void {
 		$this->wpdb->shouldReceive( 'get_results' )->once()->andReturn( array() );
 
 		( new IssueRepository( new FakeDecisionStore() ) )->find_current();
 
-		$this->assertStringContainsString( 'p.ID IS NOT NULL', $this->sql );
+		$this->assertStringContainsString( 'p.post_status IN', $this->sql );
+		$this->assertContains( 'publish', $this->values );
+		$this->assertNotContains( 'private', $this->values, 'This caller cannot read private content.' );
+
 		// A template finding is bound to no post and must survive the same test.
 		$this->assertStringContainsString( 'i.post_id = 0 OR', $this->sql );
+	}
+
+	/**
+	 * Somebody who may read private content sees findings on it.
+	 *
+	 * The restriction has to narrow for the people it is about and nobody else.
+	 * An administrator looking at a private page's findings is looking at a
+	 * page they can open in the next tab.
+	 *
+	 * @return void
+	 */
+	public function test_private_pages_are_included_for_whoever_may_read_them(): void {
+		Functions\when( 'current_user_can' )->justReturn( true );
+
+		$this->wpdb->shouldReceive( 'get_results' )->once()->andReturn( array() );
+
+		( new IssueRepository( new FakeDecisionStore() ) )->find_current();
+
+		$this->assertContains( 'publish', $this->values );
+		$this->assertContains( 'private', $this->values );
 	}
 
 	/**

@@ -587,12 +587,29 @@ class IssueRepository {
 			return array();
 		}
 
-		$slots  = implode( ', ', array_fill( 0, count( $fingerprints ), '%s' ) );
-		$values = array_merge( array( Schema::issues_table() ), $fingerprints, array( IssueStatus::Open->value ) );
+		$slots    = implode( ', ', array_fill( 0, count( $fingerprints ), '%s' ) );
+		$statuses = self::readable_statuses();
+		$open     = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
 
-		$sql = "SELECT DISTINCT fingerprint, post_id FROM %i
-			WHERE fingerprint IN ( {$slots} ) AND status = %s AND post_id > 0
-			ORDER BY post_id ASC";
+		$values = array_merge(
+			array( Schema::issues_table(), $wpdb->posts ),
+			$fingerprints,
+			array( IssueStatus::Open->value ),
+			$statuses
+		);
+
+		/*
+		 * The join is the fix. This is the query behind the page names on a
+		 * markup group — "this fault is on these thirty-seven pages" — and it
+		 * used to read the issues table alone, so it named pages regardless of
+		 * whether the caller could open them.
+		 */
+		$sql = "SELECT DISTINCT i.fingerprint, i.post_id
+			FROM %i AS i
+			INNER JOIN %i AS p ON p.ID = i.post_id
+			WHERE i.fingerprint IN ( {$slots} ) AND i.status = %s AND i.post_id > 0
+				AND p.post_status IN ( {$open} )
+			ORDER BY i.post_id ASC";
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- The IN list is placeholders only; every value goes through prepare().
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $values ) );
@@ -675,9 +692,15 @@ class IssueRepository {
 		global $wpdb;
 
 		// A finding not bound to a post is a template finding and has no page to
-		// have been deleted, so it is kept regardless.
-		$where  = array( '( i.post_id = 0 OR p.ID IS NOT NULL )' );
-		$values = array( Schema::issues_table(), $wpdb->posts );
+		// have been deleted or hidden, so it is kept regardless. Everything
+		// else has to belong to a page this caller may actually read; see
+		// readable_statuses(). A deleted post has no status and matches
+		// nothing, which is the check this replaced.
+		$statuses = self::readable_statuses();
+		$slots    = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+
+		$where  = array( "( i.post_id = 0 OR p.post_status IN ( {$slots} ) )" );
+		$values = array_merge( array( Schema::issues_table(), $wpdb->posts ), $statuses );
 
 		$status = $args['status'] ?? IssueStatus::Open;
 
@@ -710,6 +733,42 @@ class IssueRepository {
 	}
 
 	/**
+	 * The post statuses a finding's page may have for this caller to see it.
+	 *
+	 * Scans only ever run on published posts and pages — every entry point
+	 * queries `post_status => 'publish'` — so in the ordinary case this changes
+	 * nothing. What it closes is the gap afterwards: a page that was public
+	 * when it was scanned and has since been made private or pulled back to a
+	 * draft still has findings on file, and those findings carry its title and
+	 * a fragment of its markup. Reporting them to somebody who may not read
+	 * that page hands them content the page no longer shows.
+	 *
+	 * Raised in review against `/issues/grouped`, which named the pages a group
+	 * reached without checking any of this. It was true of the findings list
+	 * and the dismissal log too.
+	 *
+	 * Deliberately here rather than passed in by each controller. A repository
+	 * asking about the current user is untidy, and the alternative is a rule
+	 * every caller has to remember — which is the shape of the last two faults
+	 * found in this plugin. Restrictive by default, and a caller that forgets
+	 * gets the safe answer rather than the leaky one.
+	 *
+	 * @since 1.0.4
+	 *
+	 * @return string[]
+	 */
+	private static function readable_statuses(): array {
+		$statuses = array( 'publish' );
+
+		if ( current_user_can( 'read_private_posts' ) ) {
+			$statuses[] = 'private';
+		}
+
+		return $statuses;
+	}
+
+
+	/**
 	 * Returns findings somebody has set aside, most recent first.
 	 *
 	 * The record of what was dismissed, who dismissed it and why. Everything it
@@ -730,28 +789,34 @@ class IssueRepository {
 	public function dismissed( int $limit = 50, int $offset = 0 ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables; no core API covers them.
+		$statuses = self::readable_statuses();
+		$slots    = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom tables; the only interpolation is a generated list of %s placeholders, and every value goes through prepare() as an array the sniff cannot count. Disabled rather than ignored because the statement spans many lines and phpcs:ignore reaches only the next one.
+
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT i.* FROM %i AS i
+				"SELECT i.* FROM %i AS i
 				INNER JOIN (
 					SELECT target_id, MAX(id) AS newest
 					FROM %i
 					WHERE scope = %s AND status = %s
 					GROUP BY target_id
 				) AS latest ON latest.newest = i.scan_id
+				LEFT JOIN %i AS p ON p.ID = i.post_id
 				WHERE i.status = %s
+					AND ( i.post_id = 0 OR p.post_status IN ( {$slots} ) )
 				ORDER BY i.updated_at DESC, i.id DESC
-				LIMIT %d OFFSET %d',
-				Schema::issues_table(),
-				Schema::scans_table(),
-				'page',
-				'complete',
-				IssueStatus::Ignored->value,
-				max( 1, min( 200, $limit ) ),
-				max( 0, $offset )
+				LIMIT %d OFFSET %d",
+				array_merge(
+					array( Schema::issues_table(), Schema::scans_table(), 'page', 'complete', $wpdb->posts, IssueStatus::Ignored->value ),
+					$statuses,
+					array( max( 1, min( 200, $limit ) ), max( 0, $offset ) )
+				)
 			)
 		);
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		return array_map(
 			static fn( object $row ): Issue => Issue::from_row( $row ),
@@ -769,24 +834,32 @@ class IssueRepository {
 	public function dismissed_count(): int {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables; no core API covers them.
+		$statuses = self::readable_statuses();
+		$slots    = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom tables; the only interpolation is a generated list of %s placeholders, and every value goes through prepare() as an array the sniff cannot count. Disabled rather than ignored because the statement spans many lines and phpcs:ignore reaches only the next one.
+
+		// Restricted the same way the listing is. A count that does not match
+		// the rows under it is its own bug report.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i AS i
+				"SELECT COUNT(*) FROM %i AS i
 				INNER JOIN (
 					SELECT target_id, MAX(id) AS newest
 					FROM %i
 					WHERE scope = %s AND status = %s
 					GROUP BY target_id
 				) AS latest ON latest.newest = i.scan_id
-				WHERE i.status = %s',
-				Schema::issues_table(),
-				Schema::scans_table(),
-				'page',
-				'complete',
-				IssueStatus::Ignored->value
+				LEFT JOIN %i AS p ON p.ID = i.post_id
+				WHERE i.status = %s
+					AND ( i.post_id = 0 OR p.post_status IN ( {$slots} ) )",
+				array_merge(
+					array( Schema::issues_table(), Schema::scans_table(), 'page', 'complete', $wpdb->posts, IssueStatus::Ignored->value ),
+					$statuses
+				)
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter
 	}
 
 	/**
