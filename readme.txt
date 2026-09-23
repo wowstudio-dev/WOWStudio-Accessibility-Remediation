@@ -1,6 +1,6 @@
-=== WOWStudio Accessibility Remediation ===
+=== WOWStudio Accessibility Remediation – WCAG Checker, Scanner and Alt Text Fixes ===
 Contributors: wowstudioplugin
-Tags: accessibility, wcag, a11y, alt text, accessibility scanner
+Tags: accessibility, wcag, a11y, alt text, accessibility checker
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
@@ -126,6 +126,22 @@ No. Nothing here is generated, and nothing is sent anywhere. Where an answer dep
 = Is any of it paid? =
 
 No. Everything in this plugin is free, including checking your whole site at once. There are no locked buttons and no upgrade prompts.
+
+= What does it check? =
+
+41 checks against WCAG 2.2 level A and AA. 36 of them read the rendered HTML on the server. The other five run in your browser, on the page as it was actually painted, because contrast, target size and computed text size are not knowable from markup alone. Every finding names the success criterion it came from and says whether a machine settled it or a person still has to look.
+
+= How is this different from the other accessibility plugins? =
+
+Three things. It proposes changes to your own code rather than layering anything over the top, so the fixes survive the plugin being removed. It makes no outbound requests at all — no account, no API, no telemetry, no AI — so nothing about your site leaves your server. And nothing is gated: every check, every severity and the whole-site scan are free, because withholding a finding means not telling somebody their site has a barrier, and the person who loses that trade is the disabled visitor.
+
+= Does it work with Elementor and other page builders? =
+
+Elementor is supported and was tested against a real page rather than its documentation — it keeps nothing in `post_content`, so the plugin asks the builder for the content instead. Divi and WP Bakery keep shortcodes in `post_content` and need nothing special. Oxygen, Beaver Builder, Avada and ACF are untested so far; the `wsak_builder_content` filter is the seam if you need to teach it one.
+
+= Will it slow down my site? =
+
+Nothing is added to your front end unless you switch on a site-wide fix, and then only the CSS or the small script that the fixes you enabled actually need. There is no widget, no toolbar and no third-party request on any page view. Scanning runs in the admin and, for whole-site runs, in the background through Action Scheduler, so it never blocks a page load for a visitor.
 
 = Where is the alt text saved? =
 

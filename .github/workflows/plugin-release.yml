@@ -1,0 +1,134 @@
+# Tell the website what version is out.
+#
+# wowstudio.dev reads every version number, badge and install link on the
+# Accessibility Remediation pages from one file: src/data/plugin.json in the
+# wowstudio-website repository. That file says in its own comment that this
+# workflow writes it, and for 1.0.0 through 1.0.4 this workflow did not exist,
+# so the site sat on 1.0.0 for four releases and pointed its only call to
+# action at a bare GitHub repository instead of the plugin directory.
+#
+# A stale version on a public product page is a trust problem before it is an
+# SEO one: it is the first thing a careful reader checks, and it disagreed with
+# the directory.
+#
+# Needs a secret named WEBSITE_REPO_TOKEN: a fine-grained personal access token
+# with Contents: read and write on wowstudio-dev/wowstudio-website. Without it
+# the job says so and stops, rather than failing the release.
+name: Sync the release to the website
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, without the leading v (e.g. 1.0.5)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Write plugin.json into the website repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the plugin
+        uses: actions/checkout@v4
+
+      - name: Work out the version
+        id: v
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+
+          # The stable tag in readme.txt is what the directory actually serves.
+          # If it disagrees with the git tag, one of the two is wrong and a
+          # silent guess here would put the wrong number on the website.
+          STABLE=$(grep -m1 '^Stable tag:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')
+          if [ "$VERSION" != "$STABLE" ]; then
+            echo "::error::Tag says $VERSION but readme.txt Stable tag says $STABLE. Not publishing a version the directory is not serving."
+            exit 1
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "requires=$(grep -m1 '^Requires at least:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
+            echo "tested=$(grep -m1 '^Tested up to:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
+            echo "php=$(grep -m1 '^Requires PHP:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stop cleanly if the token is not configured
+        id: gate
+        env:
+          TOKEN: ${{ secrets.WEBSITE_REPO_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::WEBSITE_REPO_TOKEN is not set, so the website was not updated. Create a fine-grained PAT with Contents: read and write on wowstudio-dev/wowstudio-website and add it as a repository secret."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out the website
+        if: steps.gate.outputs.ok == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: wowstudio-dev/wowstudio-website
+          token: ${{ secrets.WEBSITE_REPO_TOKEN }}
+          path: website
+
+      - name: Write plugin.json
+        if: steps.gate.outputs.ok == 'true'
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          REQUIRES: ${{ steps.v.outputs.requires }}
+          TESTED: ${{ steps.v.outputs.tested }}
+          PHP: ${{ steps.v.outputs.php }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+
+          path = pathlib.Path('website/src/data/plugin.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+
+          slug = data.get('slug', 'wowstudio-accessibility-remediation')
+          repo = 'wowstudio-dev/WOWStudio-Accessibility-Remediation'
+
+          data.update({
+              'repo': repo,
+              'version': os.environ['VERSION'],
+              'repoUrl': f'https://github.com/{repo}',
+              'downloadUrl': f'https://downloads.wordpress.org/plugin/{slug}.{os.environ["VERSION"]}.zip',
+              'releaseUrl': f'https://wordpress.org/plugins/{slug}/',
+              'directoryUrl': f'https://wordpress.org/plugins/{slug}/',
+              'requiresWordPress': os.environ['REQUIRES'],
+              'testedUpTo': os.environ['TESTED'],
+              'requiresPhp': os.environ['PHP'],
+              'hasReleases': True,
+          })
+
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(data, indent=2))
+          PY
+
+      - name: Commit it
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: website
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          if git diff --quiet; then
+            echo "Website already says $VERSION. Nothing to do."
+            exit 0
+          fi
+
+          git config user.name 'wowstudio release bot'
+          git config user.email 'contact@wowstudio.dev'
+          git add src/data/plugin.json
+          git commit -m "Accessibility Remediation $VERSION is out"
+          git push

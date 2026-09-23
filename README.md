@@ -1,10 +1,20 @@
 # WOWStudio Accessibility Remediation
 
-A real-remediation WordPress accessibility plugin. It helps you **find, fix and
-document** WCAG issues at the code level.
+A free WordPress accessibility plugin that finds, fixes and documents WCAG 2.2
+issues **in your own code**. It scans every page twice, shows each finding on a
+live preview of the real page, and proposes changes to your markup and your own
+CSS that you review before anything is applied.
 
-It is not an overlay, and it never tells a user their site is compliant. See
-[`CLAUDE.md`](CLAUDE.md) for the non-negotiable product rules and
+It is not an overlay. No widget or toolbar is ever added to your front end for
+your visitors — a site-wide fix enqueues only the CSS or the small script that
+fix needs, and nothing at all is enqueued until you turn one on. It makes no
+outbound requests of any kind — no account, no API, no telemetry, no
+AI. It never tells anybody their site is compliant, because no tool can.
+
+**Install it from the WordPress Plugin Directory:**
+<https://wordpress.org/plugins/wowstudio-accessibility-remediation/>
+
+See [`CLAUDE.md`](CLAUDE.md) for the non-negotiable product rules and
 [`SPEC.md`](SPEC.md) for the full feature specification and build order.
 
 ## Status
@@ -31,6 +41,40 @@ read, carousels, and animated GIFs — testing against the page builders beyond
 Elementor, and a screen-reader pass over the admin with disabled users, which
 is the largest gap and the one no tooling closes. [`CLAUDE.md`](CLAUDE.md) has
 the list.
+
+## How it compares
+
+Honest version, because you should pick the right tool rather than this one.
+
+**[Equalize Digital Accessibility Checker](https://wordpress.org/plugins/accessibility-checker/)**
+(10,000 installs, 98/100 from 78 ratings) is the mature choice and checks a page
+as you edit it. Use it if you want a long track record and a company behind it
+with paid support. Its full-site scanning, its reports and its centralised
+results are part of the paid tier; ours are not, which is the main practical
+difference.
+
+**[WP Accessibility](https://wordpress.org/plugins/wp-accessibility/)** by Joe
+Dolson (60,000 installs, 96/100 from 68 ratings) patches common theme faults
+automatically and is written by a W3C contributor. It is not a scanner and does
+not try to be. If all you want is the automatic markup patches and no findings
+UI, it is lighter than this and you should use it. Several of our fourteen
+site-wide fixes cover the same ground.
+
+**Overlay widgets** — accessiBe, UserWay, AudioEye and the rest — inject a
+script that layers controls over your site and change nothing underneath. They
+are rejected by the disabled people they claim to serve, and one of them has
+drawn an FTC action over its marketing. Do not use one. The
+[Overlay Fact Sheet](https://overlayfactsheet.com/), signed by several hundred
+accessibility practitioners, sets out why at length.
+
+**Use this one if** you want the whole site scanned without paying, fixes that
+are written into your own code and survive the plugin being uninstalled, and a
+tool that reports what it cannot detect as plainly as what it can.
+
+**Nothing here replaces a person.** Automated testing reaches part of WCAG and
+no more. Meaningful sequence, focus order and whether your alt text is actually
+accurate all need a human being, and testing with disabled users is not
+optional.
 
 ## Requirements
 
