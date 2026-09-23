@@ -9,19 +9,28 @@ It is not an overlay, and it never tells a user their site is compliant. See
 
 ## Status
 
+**Published.** Version 1.0.4 is live in the WordPress Plugin Directory:
+<https://wordpress.org/plugins/wowstudio-accessibility-remediation/>
+
+This repository is the source for what ships there, including the JavaScript
+and CSS that are distributed compiled. Keeping it public and current is a
+condition of staying in the directory, not a courtesy.
+
 One plugin, free, nothing gated. There is no licensing SDK, no paid tier and no
 AI; see [`CHANGELOG.md`](CHANGELOG.md) for what went and why.
 
-What works: the two-pass scanner (40 checks — 35 on the server, 5 in the
-browser), the inspector with a live page
-preview, the block-editor panel, deterministic CSS fixes with preview and undo,
-fourteen site-wide fixes, site-wide scanning, the bulk alt-text editor, theme
-triage, the overview dashboard, and the accessibility-statement generator.
+What works: the two-pass scanner (41 checks — 36 on the server, 5 in the
+browser), the inspector with a live page preview, the block-editor panel,
+deterministic CSS fixes with preview and undo, fourteen site-wide fixes,
+site-wide scanning, the bulk alt-text editor, theme triage, the overview
+dashboard, the accessibility-statement generator, reading-level checking with a
+plain-language summary, WP-CLI, and the admin columns.
 
-What is next: readability and the simplified summary (WCAG 3.1.5), WP-CLI,
-per-issue documentation, admin columns and CSV export, and page-builder
-compatibility testing — then 1.0.0 and WordPress.org.
-[`CLAUDE.md`](CLAUDE.md) has the list.
+What is next: three checks the current passes cannot reach — text too small to
+read, carousels, and animated GIFs — testing against the page builders beyond
+Elementor, and a screen-reader pass over the admin with disabled users, which
+is the largest gap and the one no tooling closes. [`CLAUDE.md`](CLAUDE.md) has
+the list.
 
 ## Requirements
 

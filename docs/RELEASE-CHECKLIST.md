@@ -3,12 +3,16 @@
 Things that cannot be verified from inside the codebase, and must be confirmed
 by a human before any public release. Items marked **TODO(human)** are open.
 
-## WordPress.org submission
+## Publishing a release
 
-- [ ] **TODO(human)** `Contributors:` in readme.txt is a real WordPress.org
-      username. Currently `wowstudio`, unverified.
+The plugin was approved on 2026-09-22 and 1.0.4 is live. Submission is done;
+everything below is now the per-release routine.
+
+- [x] `Contributors:` in readme.txt is a real WordPress.org username.
+      `wowstudioplugin`, confirmed by the approval itself — the directory
+      would not have been handed over under a name that did not exist.
 - [ ] `Tested up to:` in readme.txt reflects the current WordPress release.
-      Currently `7.1`, verified against the wp-env environment on 2026-08-23.
+      Currently `7.1`, verified against the wp-env environment on 2026-09-20.
       Re-check at each release.
 - [ ] The `== Changelog ==` and `Stable tag:` in readme.txt both match the
       release being shipped. These drifted apart once already (readme listed
@@ -29,7 +33,71 @@ by a human before any public release. Items marked **TODO(human)** are open.
 - [ ] Confirm the claim is still true before each release: `grep -rn` the
       shipped tree for `wp_remote_`, `curl_`, and `file_get_contents` against a
       URL. One added request turns a simple promise into a false one.
-- [ ] Screenshots and banner assets prepared.
+- [x] Screenshots and banner assets prepared, and published to SVN `assets/`.
+      Regenerate with `python3 bin/make-directory-art.py` (icon and banner, drawn
+      from the palette in `style.scss`) and `node bin/make-screenshots.cjs`
+      (the seven screens, in the order readme.txt's captions list them —
+      WordPress.org pairs caption *n* with `screenshot-n.png` positionally, so
+      the order is load-bearing).
+
+## Pushing it to the directory
+
+SVN is a release system, not a version-control system: only finished versions
+go in it, and the working copy is disposable. Check one out wherever you like;
+nothing in this repository tracks it.
+
+```
+svn co https://plugins.svn.wordpress.org/wowstudio-accessibility-remediation
+```
+
+The layout is three siblings, and the one people get wrong is the middle one:
+
+```
+assets/       banner, icon, screenshots — beside trunk, never inside it
+trunk/        the built plugin
+tags/1.0.4/   a copy of trunk
+```
+
+- [ ] `trunk/` holds the output of `bin/build.sh`, not the working tree.
+- [ ] `tags/<version>/` is a copy of that same tree, and **its directory name
+      matches `Stable tag:` in readme.txt exactly**. WordPress.org serves the
+      tag the stable tag names. If the tag is missing the page still appears
+      and the download 404s, which is the classic first-release failure and
+      gives no error anywhere to tell you.
+- [ ] `assets/` sits beside `trunk/`, not in it. That is why the directory art
+      is excluded from the zip by `.distignore` — it would be a megabyte of
+      banner on every install for nothing.
+- [ ] `svn add` anything new, then commit once. The commit is atomic, so
+      nothing is public until the whole transfer finishes; a 600-file first
+      release takes a while and the silence is normal.
+
+```
+svn commit -m "Release x.y.z" --username wowstudioplugin
+```
+
+The SVN password is **not** the WordPress.org login. It is set separately at
+<https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password>.
+
+- [ ] Afterwards, confirm the download actually resolves rather than assuming
+      the commit was enough:
+
+```
+curl -sIL https://downloads.wordpress.org/plugin/wowstudio-accessibility-remediation.<version>.zip | head -1
+```
+
+- [ ] Tag the same tree in git (`git tag -a vx.y.z`) and push it, so the
+      published version and the repository can be proved to be one commit.
+
+## Keeping the listing
+
+Two obligations that outlive the release, both grounds for removal if dropped:
+
+- [ ] `plugins@wordpress.org` stays whitelisted. Their approval mail is explicit
+      that a plugin whose author cannot be reached may be closed.
+- [ ] The GitHub repository stays public and current. readme.txt names it as
+      the source for the compiled JavaScript and CSS, which is what satisfies
+      the human-readable-code guideline; a repository that goes private or
+      falls behind turns that into a false statement.
 
 ## Our own accessibility
 

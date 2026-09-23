@@ -10,8 +10,11 @@ apply, and where the two disagree, this file wins.
 ## What we're building
 A **real-remediation** WordPress accessibility plugin that finds, fixes and
 documents WCAG issues at the **code level**. Publisher:
-**WOWStudio**. Current phase: rebuilding the free plugin to beat Equalize
-Digital's Accessibility Checker.
+**WOWStudio**. **Published**: 1.0.4 is live in the WordPress Plugin Directory at
+`wowstudio-accessibility-remediation`, approved 2026-09-22 after three review
+rounds. The phase is now maintaining a listed plugin rather than reaching for
+one — see `docs/RELEASE-CHECKLIST.md` for how a release actually gets there,
+and for the two obligations that keep it listed.
 
 Positioning: *"helps you find, fix and document"* — never *"makes you
 compliant."*
@@ -174,7 +177,25 @@ and 4 one-click fixes, so we are ahead on both.
    outside `post_content`, so both are suspect), Avada, ACF and WooCommerce.
    **Test by building a page and scanning it** — reading the plugin's
    documentation would not have found the Elementor fault.
-7. **1.0.0 and WordPress.org submission.**
+7. **Done: WordPress.org.** Approved 2026-09-22. Three review rounds got it
+   there, and each one is worth knowing because each was a class of fault
+   rather than a line:
+
+   - The name, "Accessibility Kit", was too close to other plugins. Renamed,
+     and the slug is permanent now.
+   - Two inline `<style>` elements had to be enqueued, and the redirect the
+     onboarding fired on activation had to go — Guideline 11, hijacking the
+     admin. The setup itself stayed; the dashboard opens on it instead.
+   - The readme had to name the public repository the compiled JavaScript is
+     built from, and document the build.
+   - Two read endpoints asked for `RUN_SCAN` instead of `VIEW_REPORTS`, and
+     findings were reported for pages the reader may not open. Both fixed, and
+     `RestPermissionTest` now names the capability every gate must require —
+     the check it replaced counted callbacks and passed while two were wrong.
+
+   The lesson worth carrying: they say plainly that they may not list every
+   instance of a fault. Every round here had a second instance they had not
+   named. Search for the class, never patch the line.
 
 All four extension seams exist, and `ExtensionSeamsTest` guards them — a renamed
 filter is a silent break for every add-on at once, with no error anywhere:
@@ -199,7 +220,10 @@ filter is a silent break for every add-on at once, with no error anywhere:
 
 ## Branches
 Work lands on **`Dev`**, then **`main`**, and reaches **`Release`** only once the
-gate is green and anything worth checking live has been checked. `Website` is
+gate is green and anything worth checking live has been checked. A published
+release is then tagged `vx.y.z` and pushed to SVN; `docs/RELEASE-CHECKLIST.md`
+has the procedure, including the `Stable tag` / `tags/` pairing that is the
+whole download mechanism and the easiest thing to break. `Website` is
 separate and nothing here touches it. `main` is the default branch.
 
 Three tags carry everything from the abandoned paid direction, because no branch

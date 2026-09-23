@@ -144,6 +144,10 @@ In WordPress's own alt text field on the media item. It therefore applies everyw
 == Changelog ==
 
 = 1.0.4 =
+The first version released in the plugin directory. 1.0.0 to 1.0.3 were used
+during review and were never distributed, so the entries below them describe
+changes no installation ever saw.
+
 * Fixed: viewing the findings report now requires the reports capability rather than the scanning one.
 * Fixed: findings are no longer listed for pages the viewer is not allowed to read, which could happen when a page was made private after being scanned.
 
@@ -164,7 +168,7 @@ Changes from the WordPress.org review round, before the first release reached an
 * Activating the plugin no longer redirects you. The setup is still there; the plugin's own dashboard opens on it until you have been through it.
 
 = 1.0.0 =
-First public release.
+Prepared for submission. Not released.
 
 * Finds accessibility problems on your posts and pages, checking against WCAG 2.2 A and AA with 41 checks across two passes — one on the server that reads the rendered HTML, and one in your own browser for the things no parser can know: real contrast, real target sizes, real layout.
 * Puts every finding beside a live preview of the page it is on, so choosing one highlights the element it is about.
