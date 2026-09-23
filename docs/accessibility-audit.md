@@ -145,7 +145,7 @@ Each new screen was rendered against the real `@wordpress/components` build and
 inspected: heading order, accessible names on every control, alt on every image,
 live regions, and whether everything is reachable by keyboard.
 
-| | |
+| What was checked | Result |
 | --- | --- |
 | Heading order | No skipped levels on any screen. |
 | Unnamed controls | None. |

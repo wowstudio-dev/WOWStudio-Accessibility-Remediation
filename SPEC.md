@@ -740,7 +740,7 @@ The instinct behind "user clicks auto fix and the plugin fixes it" is right, and
 it collides with product rule #3 only because one phrase is covering two
 different kinds of change:
 
-| | Deterministic | Generative |
+| Aspect | Deterministic | Generative |
 | --- | --- | --- |
 | Examples | `lang` on `<html>`, a missing `<title>`, `tabindex="0"` on a scroll region, an underline on a link, a 24px minimum target | alt text, button names, link text |
 | Produced by | a rule; there is one right answer | a model; it is a guess |
@@ -760,7 +760,7 @@ answer is not the same as being able to apply it.
 The honest tally, pinned in `FixPlanTest` so it cannot drift upward one
 reasonable-looking rule at a time:
 
-| | count | |
+| Kind of fix | Count | What they are |
 | --- | --- | --- |
 | **One click** | 4 | colour, link underline, target size — all CSS and already shipped — plus a missing `<title>`, which WordPress writes itself once a plugin declares `title-tag` support on the theme's behalf |
 | **Draft, then review** | 6 | alt text, and the five other checks whose fix is a piece of writing |
@@ -922,7 +922,7 @@ one page and the wrong one for two hundred:
 So bulk does not fetch pages. It uses three strategies, chosen by what is being
 asked and what the host allows.
 
-| | How it gets the markup | Needs | Sees | Used by |
+| Source | How it gets the markup | Needs | Sees | Used by |
 | --- | --- | --- | --- | --- |
 | **Content** | `the_content` filters, in process | nothing | the post's own content | every bulk scan, always |
 | **Template** | loopback of a handful of representative URLs, once per theme version | loopback | the whole page, chrome included | site-level findings, and the profile below |

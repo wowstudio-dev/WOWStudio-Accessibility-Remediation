@@ -78,7 +78,7 @@ optional.
 
 ## Requirements
 
-| | |
+| Dependency | Version |
 |---|---|
 | WordPress | 6.8+ |
 | PHP | 8.1+ |

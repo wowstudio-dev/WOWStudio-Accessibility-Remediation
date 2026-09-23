@@ -108,7 +108,7 @@ signatories who all know each other.
 
 ## Numbers as of 2026-09-24
 
-| | Installs | Rating |
+| Plugin | Installs | Rating |
 | --- | --- | --- |
 | WP Accessibility | 60,000 | 96/100, 68 ratings |
 | Equalize Digital Accessibility Checker | 10,000 | 98/100, 78 ratings |
