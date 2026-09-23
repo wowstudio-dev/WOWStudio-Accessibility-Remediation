@@ -1,20 +1,27 @@
-# Tell the website what version is out.
+# Publish the tag, and tell the website about it.
 #
-# wowstudio.dev reads every version number, badge and install link on the
-# Accessibility Remediation pages from one file: src/data/plugin.json in the
-# wowstudio-website repository. That file says in its own comment that this
-# workflow writes it, and for 1.0.0 through 1.0.4 this workflow did not exist,
-# so the site sat on 1.0.0 for four releases and pointed its only call to
-# action at a bare GitHub repository instead of the plugin directory.
+# The website already knows how to update itself: wowstudio-website has a
+# "Sync plugin release" workflow that reads this repository's latest GitHub
+# release, rewrites src/data/plugin.json and the changelog from it, and opens a
+# pull request. It has been running on its daily schedule and finding nothing,
+# because two things were missing at this end:
 #
-# A stale version on a public product page is a trust problem before it is an
-# SEO one: it is the first thing a careful reader checks, and it disagreed with
-# the directory.
+#   1. No GitHub release was ever cut. Tags existed; releases did not, and the
+#      sync reads /releases/latest.
+#   2. Nothing sent the repository_dispatch the sync listens for, so the only
+#      path that ever fired was the once-a-day sweep.
 #
-# Needs a secret named WEBSITE_REPO_TOKEN: a fine-grained personal access token
-# with Contents: read and write on wowstudio-dev/wowstudio-website. Without it
-# the job says so and stops, rather than failing the release.
-name: Sync the release to the website
+# The result was a product page stuck on 1.0.0 for four releases, with its only
+# call to action pointing at this repository instead of the plugin directory.
+#
+# So this workflow does exactly two things and leaves the rest to the sync:
+# it cuts the release, and it pokes the website.
+#
+# The dispatch needs a secret named WEBSITE_REPO_TOKEN: a fine-grained personal
+# access token with Contents read and write on wowstudio-dev/wowstudio-website.
+# Without it the release is still cut and the website picks it up on the next
+# daily sweep, a few hours later, rather than immediately.
+name: Publish the release
 
 on:
   push:
@@ -22,113 +29,93 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to publish, without the leading v (e.g. 1.0.5)'
+      tag:
+        description: 'Tag to publish, with the v (e.g. v1.0.5). It must already exist.'
         required: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  sync:
-    name: Write plugin.json into the website repo
+  publish:
+    name: Cut the release and notify the website
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the plugin
+      - name: Check out the tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+          fetch-depth: 0
 
-      - name: Work out the version
-        id: v
+      - name: Read the version and its changelog
+        id: rel
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
 
-          # The stable tag in readme.txt is what the directory actually serves.
-          # If it disagrees with the git tag, one of the two is wrong and a
-          # silent guess here would put the wrong number on the website.
+          # The directory serves whatever Stable tag names. If the tag being
+          # published is not that version, one of the two is wrong, and
+          # announcing the wrong number is worse than not announcing.
           STABLE=$(grep -m1 '^Stable tag:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')
           if [ "$VERSION" != "$STABLE" ]; then
-            echo "::error::Tag says $VERSION but readme.txt Stable tag says $STABLE. Not publishing a version the directory is not serving."
+            echo "::error::Tag $TAG does not match readme.txt Stable tag $STABLE."
+            exit 1
+          fi
+
+          # Lift this version's section out of the readme changelog. The site's
+          # sync uses the release body verbatim, so it is worth being the real
+          # notes rather than "see the changelog".
+          awk -v want="= $VERSION =" '
+            $0 == want { grab = 1; next }
+            grab && /^= [0-9]+\.[0-9]+\.[0-9]+ =$/ { exit }
+            grab { print }
+          ' readme.txt | sed -e '/./,$!d' > /tmp/notes.md
+
+          if [ ! -s /tmp/notes.md ]; then
+            echo "::error::No '= $VERSION =' section in the readme changelog."
             exit 1
           fi
 
           {
-            echo "version=$VERSION"
-            echo "requires=$(grep -m1 '^Requires at least:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
-            echo "tested=$(grep -m1 '^Tested up to:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
-            echo "php=$(grep -m1 '^Requires PHP:' readme.txt | sed 's/.*:[[:space:]]*//' | tr -d '[:space:]')"
-          } >> "$GITHUB_OUTPUT"
+            echo ""
+            echo "---"
+            echo ""
+            echo "Install it from the [WordPress Plugin Directory](https://wordpress.org/plugins/wowstudio-accessibility-remediation/)."
+          } >> /tmp/notes.md
 
-      - name: Stop cleanly if the token is not configured
-        id: gate
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Cut the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.rel.outputs.tag }}
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Leaving it alone."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --title "$VERSION" \
+            --notes-file /tmp/notes.md \
+            --verify-tag
+
+      - name: Tell the website
         env:
           TOKEN: ${{ secrets.WEBSITE_REPO_TOKEN }}
+          TAG: ${{ steps.rel.outputs.tag }}
         run: |
           if [ -z "$TOKEN" ]; then
-            echo "::warning::WEBSITE_REPO_TOKEN is not set, so the website was not updated. Create a fine-grained PAT with Contents: read and write on wowstudio-dev/wowstudio-website and add it as a repository secret."
-            echo "ok=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ok=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check out the website
-        if: steps.gate.outputs.ok == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: wowstudio-dev/wowstudio-website
-          token: ${{ secrets.WEBSITE_REPO_TOKEN }}
-          path: website
-
-      - name: Write plugin.json
-        if: steps.gate.outputs.ok == 'true'
-        env:
-          VERSION: ${{ steps.v.outputs.version }}
-          REQUIRES: ${{ steps.v.outputs.requires }}
-          TESTED: ${{ steps.v.outputs.tested }}
-          PHP: ${{ steps.v.outputs.php }}
-        run: |
-          python3 - <<'PY'
-          import json, os, pathlib
-
-          path = pathlib.Path('website/src/data/plugin.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
-
-          slug = data.get('slug', 'wowstudio-accessibility-remediation')
-          repo = 'wowstudio-dev/WOWStudio-Accessibility-Remediation'
-
-          data.update({
-              'repo': repo,
-              'version': os.environ['VERSION'],
-              'repoUrl': f'https://github.com/{repo}',
-              'downloadUrl': f'https://downloads.wordpress.org/plugin/{slug}.{os.environ["VERSION"]}.zip',
-              'releaseUrl': f'https://wordpress.org/plugins/{slug}/',
-              'directoryUrl': f'https://wordpress.org/plugins/{slug}/',
-              'requiresWordPress': os.environ['REQUIRES'],
-              'testedUpTo': os.environ['TESTED'],
-              'requiresPhp': os.environ['PHP'],
-              'hasReleases': True,
-          })
-
-          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
-          print(json.dumps(data, indent=2))
-          PY
-
-      - name: Commit it
-        if: steps.gate.outputs.ok == 'true'
-        working-directory: website
-        env:
-          VERSION: ${{ steps.v.outputs.version }}
-        run: |
-          if git diff --quiet; then
-            echo "Website already says $VERSION. Nothing to do."
+            echo "::warning title=Website not notified::WEBSITE_REPO_TOKEN is not set. The site's own daily sweep will pick this release up within 24 hours. To make it immediate, add a fine-grained PAT with Contents read and write on wowstudio-dev/wowstudio-website."
             exit 0
           fi
 
-          git config user.name 'wowstudio release bot'
-          git config user.email 'contact@wowstudio.dev'
-          git add src/data/plugin.json
-          git commit -m "Accessibility Remediation $VERSION is out"
-          git push
+          curl -sS -f -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/wowstudio-dev/wowstudio-website/dispatches \
+            -d "{\"event_type\":\"plugin-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+
+          echo "Dispatched plugin-release for $TAG."
