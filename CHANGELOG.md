@@ -6,17 +6,6 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added
-
-- Scan summaries now record findings per rule, in `by_rule`, alongside the
-  counts by severity and detection that were already there. The summary is the
-  only part of a scan that outlives it — individual findings are pruned once a
-  newer scan supersedes them — so without this, a scan more than one run old has
-  nothing left to say about *what* it was failing, only how much. Anything
-  comparing a page against its own past had to treat every rule in the newer
-  scan as newly broken, which made every page look like it had got worse. Found
-  by running the paid add-on's scheduled scan against a real install.
-
 ### Still outstanding
 
 Rewritten at 1.0.0, because the previous version of this list had gone stale in
@@ -37,10 +26,92 @@ keeping if it is true.
   Elementor was before 0.27.0. Avada, ACF and WooCommerce are untested. The way
   to find out is to build a page and scan it.
 
+## [1.0.5] - 2026-10-12
+
+The listing says what the plugin does, the plugin says the add-on exists, and
+CI says something again.
+
+### Added
+
+- **One mention of the paid add-on**, at the foot of this plugin's own
+  dashboard and nowhere else. *Accessibility Remediation Premium* shipped on
+  2026-09-25 as a separate plugin, and this one had no way of telling anybody
+  so. It is a plain panel, not a promotion: no button, no padlock, no second
+  placement, nothing disabled. There is nothing locked in this plugin, so there
+  is nothing to hang a padlock on.
+
+  It disappears once the add-on is installed, because advertising something to
+  the person who already has it is the commonest way a mention becomes a nag,
+  and `wsak_mention_add_on` removes it outright for anybody running this for a
+  client. `src/Support/AddOn.php` is the only code that knows the add-on
+  exists, and its docblock records where this stops being a mention and becomes
+  the thing the product rule was written against.
+
+### Changed
+
+- **The directory listing now says what the plugin does.** The displayed title
+  was the plugin's name and nothing else, and nobody searches for
+  "remediation". It names the checker, the scanner and the alt-text work now.
+  The approved name stays at the head of it, because reopening the naming round
+  is not worth the words. The slug is unchanged and permanent.
+- **Tag `accessibility scanner` traded for `accessibility checker`**, which is
+  what the category is actually called. Five is the maximum and all five are
+  used; "scanner" moved into the title.
+- **Four questions added to the readme FAQ** — what it checks, how it differs
+  from the others, page builders, and whether it slows a site down. The answer
+  about whether any of it is paid now also describes the add-on.
+- **The directory banner stopped repeating the plugin's name.** The directory
+  prints that as a heading immediately beneath the image, so the old banner
+  spent its one moment of attention on something the page had already said. It
+  carries the argument instead, with a focus ring around the mark — decoration
+  that happens to be true, since a visible focus outline is one of the fixes
+  this plugin adds.
+
+### Fixed
+
+- **CI had failed on every run since 2026-09-06 and nobody knew.** The workflow
+  ran `bin/check-free-build.php`, a guard against premium code reaching the free
+  build, and that file was deleted in the commit that made this one free plugin
+  while the workflow line stayed behind. Forty-eight commits landed red,
+  including the 1.0.4 release.
+
+  It hid because `bin/gate.sh` never called that script, so local runs passed
+  ten out of ten and looked authoritative, and because the step failed *after*
+  the claims, disclosure and contrast guards had already passed. The practical
+  effect was that CI carried no signal at all: a real failure would have looked
+  exactly like this one. The step is gone rather than the script restored — the
+  guard is moot now that Premium is a separate repository with no free build to
+  leak into.
+- An empty first header cell in six documentation tables, which is a fault this
+  plugin's own checks report. Found by the website's accessibility audit
+  rejecting a page built from one of them.
+
+### Documentation
+
+- `docs/DISCOVERY.md`, on how people and machines find this plugin, what was
+  done about it and what is left that needs a password.
+- `README.md` opens by saying what the plugin is, and compares itself against
+  Equalize Digital and WP Accessibility with their real install counts, saying
+  when to use those instead.
+- `docs/RELEASE-CHECKLIST.md` covers the SVN step the procedure never wrote down,
+  including the `Stable tag` and `tags/` pairing that is the whole download
+  mechanism.
+
 ## [1.0.4] - 2026-09-20
 
 The third WordPress.org review round. One finding, with two halves, and both
 were real.
+
+### Added
+
+- Scan summaries now record findings per rule, in `by_rule`, alongside the
+  counts by severity and detection that were already there. The summary is the
+  only part of a scan that outlives it — individual findings are pruned once a
+  newer scan supersedes them — so without this, a scan more than one run old has
+  nothing left to say about *what* it was failing, only how much. Anything
+  comparing a page against its own past had to treat every rule in the newer
+  scan as newly broken, which made every page look like it had got worse. Found
+  by running the paid add-on's scheduled scan against a real install.
 
 ### Security
 

@@ -4,7 +4,7 @@ Tags: accessibility, wcag, a11y, alt text, accessibility checker
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,11 @@ In WordPress's own alt text field on the media item. It therefore applies everyw
 7. The setup, on first activation. Three steps, none of them mandatory, and nothing switched on for you.
 
 == Changelog ==
+
+= 1.0.5 =
+* The listing now says what the plugin does rather than only what it is called. Nobody searches for "remediation".
+* Four questions answered in the FAQ: what it checks, how it differs from the others, page builders, and whether it slows a site down.
+* There is now a paid add-on, and this plugin says so once, at the foot of its own dashboard. It disappears when the add-on is installed, and the `wsak_mention_add_on` filter removes it entirely. Nothing in this plugin became locked, limited or worse: every check, every severity and the whole-site scan are still free, with no page limit.
 
 = 1.0.4 =
 The first version released in the plugin directory. 1.0.0 to 1.0.3 were used
