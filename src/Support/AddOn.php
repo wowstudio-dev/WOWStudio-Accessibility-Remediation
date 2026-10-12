@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace WOWStudio\AccessibilityKit\Support;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The one place that knows a separate paid plugin exists.
  *
