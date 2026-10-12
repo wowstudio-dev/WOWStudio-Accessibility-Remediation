@@ -136,10 +136,31 @@ def build_icon(px):
     return icon.resize((px, px), Image.LANCZOS)
 
 
+def chip(draw, x, y, text, font, pad_x, pad_y, radius):
+    """A pill. Returns the x to start the next one at."""
+    w = draw.textlength(text, font=font)
+    top = draw.textbbox((0, 0), text, font=font)[1]
+    box = (x, y, x + w + pad_x * 2, y + pad_y * 2 + font.size)
+    draw.rounded_rectangle(box, radius=radius, fill=(255, 255, 255, 20), outline=LAVENDER + (70,), width=max(1, round(radius * 0.08)))
+    draw.text((x + pad_x, y + pad_y - top + (font.size - (draw.textbbox((0, 0), text, font=font)[3] - top)) / 2), text, font=font, fill=LAVENDER + (255,))
+    return box[2]
+
+
 def build_banner(w, h):
+    """
+    The banner, which deliberately does not say the plugin's name.
+
+    The directory prints the name as a heading immediately underneath this
+    image, so a banner that repeats it spends its only moment of attention
+    saying something the page already said. It carries the argument instead:
+    what this plugin does that the other ones in the same search do not.
+
+    Everything sits in the left two thirds. The directory's own layout puts
+    nothing over the banner, but the 772-wide version is what most people
+    actually see, and type that survives at that width has to be large.
+    """
     size = (w * 2, h * 2)
     img = gradient(size, [(0.0, NAVY), (0.55, (58, 48, 112)), (1.0, INDIGO)], 12)
-    draw = ImageDraw.Draw(img, "RGBA")
 
     # A soft wash of the lavender end, kept well away from any text.
     glow = Image.new("RGBA", size, (0, 0, 0, 0))
@@ -153,31 +174,48 @@ def build_banner(w, h):
     img = Image.alpha_composite(img.convert("RGBA"), glow)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    pad = size[1] * 0.20
-    tile = size[1] * 0.34
+    pad = size[1] * 0.17
+    tile = size[1] * 0.30
 
     tile_img = build_icon(round(tile))
-    img.paste(tile_img, (round(pad), round((size[1] - tile) / 2)), tile_img)
+    img.paste(tile_img, (round(pad), round(size[1] * 0.175)), tile_img)
 
-    x = pad + tile + size[1] * 0.115
-    title = helvetica(round(size[1] * 0.180), "bold")
-    sub = helvetica(round(size[1] * 0.078), "regular")
-    eyebrow = helvetica(round(size[1] * 0.062), "medium")
+    x = pad + tile + size[1] * 0.10
 
-    # Letter-spaced by hand: PIL has no tracking, and an eyebrow set solid at
-    # this size reads as a word rather than as a label.
-    ex = x
-    for ch in "WOWSTUDIO":
-        draw.text((ex, size[1] * 0.250), ch, font=eyebrow, fill=LAVENDER + (255,))
-        ex += draw.textlength(ch, font=eyebrow) + size[1] * 0.013
-
-    draw.text((x, size[1] * 0.350), "Accessibility Remediation", font=title, fill=WHITE + (255,))
-    draw.text(
-        (x, size[1] * 0.615),
-        "Find, fix and document WCAG issues at the code level",
-        font=sub,
-        fill=(206, 199, 240, 255),
+    # A focus ring around the mark. It is decoration that happens to be true:
+    # a visible focus outline is one of the site-wide fixes this plugin adds,
+    # and it is the single most recognisable image accessibility work has.
+    ring = size[1] * 0.045
+    draw.rounded_rectangle(
+        (
+            pad - ring,
+            size[1] * 0.175 - ring,
+            pad + tile + ring,
+            size[1] * 0.175 + tile + ring,
+        ),
+        radius=round(tile * 0.22 + ring),
+        outline=LAVENDER + (170,),
+        width=max(2, round(size[1] * 0.013)),
     )
+
+    head = helvetica(round(size[1] * 0.168), "bold")
+    chips = helvetica(round(size[1] * 0.056), "medium")
+
+    draw.text((x, size[1] * 0.195), "Fix the page,", font=head, fill=WHITE + (255,))
+    draw.text((x, size[1] * 0.395), "not the symptom.", font=head, fill=WHITE + (255,))
+
+    cx = x
+    for label in ("41 WCAG CHECKS", "NOT AN OVERLAY", "NO TRACKING", "FREE"):
+        cx = chip(
+            draw,
+            cx,
+            size[1] * 0.665,
+            label,
+            chips,
+            pad_x=size[1] * 0.045,
+            pad_y=size[1] * 0.030,
+            radius=size[1] * 0.055,
+        ) + size[1] * 0.030
 
     return img.convert("RGB").resize((w, h), Image.LANCZOS)
 

@@ -14,6 +14,7 @@ import IssueDrilldown from './components/issue-drilldown';
 import IssueList from './components/issue-list';
 import Onboarding from './components/onboarding';
 import Overview from './components/overview';
+import AddOn from './components/add-on';
 import AltTextEditor from './components/alt-text-editor';
 import SiteFixes from './components/site-fixes';
 import Dismissed from './components/dismissed';
@@ -650,6 +651,10 @@ export default function App() {
 					</p>
 					<CoveragePanel />
 				</>
+			) }
+
+			{ 'overview' === settings.screen && 'welcome' !== view && (
+				<AddOn />
 			) }
 
 			<footer className="wsak__footer">

@@ -3032,3 +3032,38 @@
 	background: none;
 	box-shadow: none;
 }
+
+/* ── The one mention of the paid add-on ───────────────────────────────────
+   Foot of the dashboard, above the disclaimer, and nowhere else. Styled as
+   a quiet panel rather than a promotion: no accent fill, no gradient, no
+   button. If this ever starts looking like an advertisement, the thing to
+   change is the design, not the placement. */
+.wsak-addon {
+	max-width: 82ch;
+	margin-top: var(--wsak-space-8);
+	padding: var(--wsak-space-5);
+	background: var(--wsak-raised);
+	border: 1px solid var(--wsak-line);
+	border-radius: var(--wsak-radius);
+}
+
+.wsak-addon__title {
+	margin: 0 0 var(--wsak-space-3);
+	color: var(--wsak-muted);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.wsak-addon__body {
+	margin: 0 0 var(--wsak-space-3);
+	color: var(--wsak-text);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.wsak-addon__link {
+	margin: 0;
+	font-size: 13px;
+}

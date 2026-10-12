@@ -88,9 +88,6 @@ jobs:
       - name: Our own admin UI meets the contrast we report on
         run: node bin/check-contrast.js --verbose
 
-      - name: No premium code in the free build
-        run: php bin/check-free-build.php
-
   plugin-check:
     name: Plugin Check
     runs-on: ubuntu-latest

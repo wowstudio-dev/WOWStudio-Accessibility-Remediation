@@ -66,7 +66,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Menu.php:127
-#: assets/src/app.js:340
+#: assets/src/app.js:341
 msgid "Accessibility Remediation"
 msgstr ""
 
@@ -83,7 +83,7 @@ msgid "Settings"
 msgstr ""
 
 #: src/Admin/Menu.php:144
-#: assets/src/app.js:110
+#: assets/src/app.js:111
 msgid "Statement"
 msgstr ""
 
@@ -265,7 +265,7 @@ msgstr ""
 msgid "Reviewed and approved by %1$s on %2$s."
 msgstr ""
 
-#: src/Core/Assets.php:186
+#: src/Core/Assets.php:187
 msgid "The Accessibility Remediation interface has not been built. Run \"npm install && npm run build\" in the plugin directory."
 msgstr ""
 
@@ -1829,7 +1829,7 @@ msgid "Whole site"
 msgstr ""
 
 #: src/Scanner/ScanScope.php:53
-#: assets/src/app.js:77
+#: assets/src/app.js:78
 msgid "Theme"
 msgstr ""
 
@@ -2022,6 +2022,7 @@ msgid "Covers links inside post and page content. Links your theme prints — in
 msgstr ""
 
 #: src/SiteFixes/Fixes/NewWindowWarning.php:173
+#: assets/src/components/add-on.js:51
 msgid "(opens in a new tab)"
 msgstr ""
 
@@ -2117,112 +2118,128 @@ msgstr ""
 msgid "Something went wrong and we could not say what. Please try again."
 msgstr ""
 
-#: assets/src/app.js:36
+#: assets/src/app.js:37
 msgid "This plugin helps you find, fix and document accessibility problems. It does not determine whether your site meets the ADA, the European Accessibility Act, Section 508, or any other legal requirement, and nothing here is legal advice."
 msgstr ""
 
-#: assets/src/app.js:57
+#: assets/src/app.js:58
 msgid "Report"
 msgstr ""
 
-#: assets/src/app.js:65
+#: assets/src/app.js:66
 msgid "One page"
 msgstr ""
 
-#: assets/src/app.js:69
+#: assets/src/app.js:70
 msgid "Your content"
 msgstr ""
 
-#: assets/src/app.js:82
+#: assets/src/app.js:83
 msgid "Images"
 msgstr ""
 
-#: assets/src/app.js:87
+#: assets/src/app.js:88
 #: assets/src/components/dismissed.js:313
 msgid "False positives"
 msgstr ""
 
-#: assets/src/app.js:99
+#: assets/src/app.js:100
 msgid "Site fixes"
 msgstr ""
 
-#: assets/src/app.js:251
+#: assets/src/app.js:252
 msgid "Scanning the page…"
 msgstr ""
 
 #. translators: %d: number of findings.
-#: assets/src/app.js:266
+#: assets/src/app.js:267
 #, js-format
 msgid "Scan finished. %d findings."
 msgstr ""
 
-#: assets/src/app.js:277
+#: assets/src/app.js:278
 msgid "The scan failed."
 msgstr ""
 
-#: assets/src/app.js:346
+#: assets/src/app.js:347
 msgid "Find, fix and document accessibility problems at the code level."
 msgstr ""
 
 #. translators: %s: when the most recent scan finished.
-#: assets/src/app.js:371
+#: assets/src/app.js:372
 #, js-format
 msgid "Last checked %s"
 msgstr ""
 
-#: assets/src/app.js:377
+#: assets/src/app.js:378
 #: assets/src/components/overview.js:114
 msgid "Nothing checked yet"
 msgstr ""
 
-#: assets/src/app.js:386
+#: assets/src/app.js:387
 msgid "Check pages"
 msgstr ""
 
-#: assets/src/app.js:403
+#: assets/src/app.js:404
 msgid "Sections"
 msgstr ""
 
-#: assets/src/app.js:441
+#: assets/src/app.js:442
 msgid "You can read results here but not start a scan. An administrator can grant that."
 msgstr ""
 
-#: assets/src/app.js:493
+#: assets/src/app.js:494
 msgid "Loading the scan…"
 msgstr ""
 
 #. translators: %s: content title.
-#: assets/src/app.js:515
+#: assets/src/app.js:516
 #, js-format
 msgid "Results for “%s”"
 msgstr ""
 
-#: assets/src/app.js:521
+#: assets/src/app.js:522
 msgid "Scan results"
 msgstr ""
 
-#: assets/src/app.js:544
+#: assets/src/app.js:545
 msgid "Show as a list"
 msgstr ""
 
-#: assets/src/app.js:548
+#: assets/src/app.js:549
 msgid "Show on the page"
 msgstr ""
 
-#: assets/src/app.js:557
+#: assets/src/app.js:558
 msgid "Back to your content"
 msgstr ""
 
-#: assets/src/app.js:568
+#: assets/src/app.js:569
 msgid "This scan covered less than usual."
 msgstr ""
 
-#: assets/src/app.js:645
+#: assets/src/app.js:646
 msgid "← Back to the overview"
 msgstr ""
 
 #: assets/src/blocks/statement/index.js:33
 msgid "Nothing to show yet. Write your accessibility statement in the Accessibility settings."
+msgstr ""
+
+#: assets/src/components/add-on.js:27
+msgid "Scheduled re-checking"
+msgstr ""
+
+#: assets/src/components/add-on.js:33
+msgid "This plugin checks when you ask it to. A separate plugin, Accessibility Remediation Premium, runs the same checks on a schedule and tells you what changed since the last one — which is the part that catches a problem somebody introduced last Tuesday."
+msgstr ""
+
+#: assets/src/components/add-on.js:39
+msgid "It is a paid add-on. Nothing here becomes locked, limited or worse because it exists: every check, every severity and the whole-site scan stay free, with no page limit."
+msgstr ""
+
+#: assets/src/components/add-on.js:46
+msgid "Read what it does"
 msgstr ""
 
 #: assets/src/components/alt-text-editor.js:76

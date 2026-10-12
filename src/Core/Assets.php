@@ -10,6 +10,7 @@ namespace WOWStudio\AccessibilityKit\Core;
 use WOWStudio\AccessibilityKit\Admin\Menu;
 use WOWStudio\AccessibilityKit\Admin\Onboarding;
 use WOWStudio\AccessibilityKit\Rest\ScanController;
+use WOWStudio\AccessibilityKit\Support\AddOn;
 use WOWStudio\AccessibilityKit\Support\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
@@ -223,6 +224,13 @@ final class Assets implements Registrable {
 			// dashboard rather than a screen of its own — see the note on
 			// Onboarding::QUERY_ARG for why WordPress leaves no better option.
 			'welcome'      => Onboarding::is_requested(),
+			// Whether to mention the separate paid add-on, and where. False
+			// once it is installed. Support\AddOn carries the reasoning for
+			// where the line sits between saying a thing exists and nagging.
+			'addOn'        => array(
+				'mention' => AddOn::should_mention(),
+				'url'     => AddOn::url(),
+			),
 			'capabilities' => array(
 				'runScan'     => current_user_can( Capabilities::RUN_SCAN ),
 				'applyFix'    => current_user_can( Capabilities::APPLY_FIX ),

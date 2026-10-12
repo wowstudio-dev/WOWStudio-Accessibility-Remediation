@@ -25,16 +25,29 @@ because a header advertising something the plugin does not do is the same
 species of claim the guard in `bin/check-claims.php` exists to stop. If
 monitoring ever returns to free, the word comes back with it and not before.
 
-## There is one plugin, and it is free
-As of 0.16.0 there is **no paid tier, no licensing SDK, and no AI**. Everything
-in the plugin is free and nothing is gated. Do not add a locked control, an
-upgrade prompt, a usage cap, or a tier check.
+## This plugin is free, and stays free
+As of 0.16.0 there is **no paid tier, no licensing SDK, and no AI** in here.
+Everything in this plugin is free and nothing is gated. Do not add a locked
+control, a usage cap, or a tier check.
 
-A paid add-on is planned but not started. It will be a **separate plugin that
-attaches to this one**, never a stripped build of it — so the free plugin ships
-complete and nothing is ever taken away from anybody who already had it. The
-frozen `Pro` branch and `PRO-NOTES.md` hold that plan; the tag
+**The paid add-on shipped**, on 2026-09-25. *WOWStudio Accessibility
+Remediation Premium* is a **separate plugin in a separate repository**
+(`WOWStudio-Accessibility-Remediation-Premium`, sold through Freemius), never a
+stripped build of this one, so this plugin ships complete and nothing was taken
+away from anybody who already had it. It adds scheduled re-checking — the
+monitoring removed from free in 0.22.0 — and declares
+`Requires Plugins: wowstudio-accessibility-remediation`. The tag
 `pro-seed-0.15.1` is the last tree containing the removed licensing and AI code.
+
+**This plugin mentions it exactly once**: a plain panel at the foot of its own
+dashboard, which disappears the moment the add-on is installed, and which the
+`wsak_mention_add_on` filter removes entirely. `src/Support/AddOn.php` is the
+only place that knows the add-on exists, and its docblock carries the
+reasoning. That mention is the whole of it, and it is where the line sits:
+**the moment it grows a second placement, a countdown, a disabled control, or
+the word "upgrade" on a button, it has become the thing the rule was written
+against.** There is still nothing locked in here, so there is nothing to hang a
+padlock on.
 
 **The line, for when it matters: never gate finding. Gate automation,
 deliverables, and marginal cost.** Withholding a check means telling somebody

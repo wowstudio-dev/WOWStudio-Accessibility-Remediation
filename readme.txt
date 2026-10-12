@@ -125,7 +125,9 @@ No. Nothing here is generated, and nothing is sent anywhere. Where an answer dep
 
 = Is any of it paid? =
 
-No. Everything in this plugin is free, including checking your whole site at once. There are no locked buttons and no upgrade prompts.
+No. Everything in this plugin is free, including checking your whole site at once. There are no locked buttons and no upgrade prompts, and nothing is withheld until you pay.
+
+There is a separate paid plugin, WOWStudio Accessibility Remediation Premium, which adds scheduled re-checking: it re-runs the same checks on a schedule and reports what changed since the last run. It is an add-on that attaches to this plugin rather than a different build of it, so installing it takes nothing away and not installing it leaves nothing locked. This plugin mentions it once, at the foot of its own dashboard, and says nothing about it once it is installed. The `wsak_mention_add_on` filter removes even that.
 
 = What does it check? =
 
