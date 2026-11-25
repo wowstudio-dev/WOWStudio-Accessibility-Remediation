@@ -26,6 +26,48 @@ keeping if it is true.
   Elementor was before 0.27.0. Avada, ACF and WooCommerce are untested. The way
   to find out is to build a page and scan it.
 
+## [1.0.6] - 2026-11-25
+
+### Fixed
+
+- **The skip link pointed at an id that was not on the page, on every site
+  built with Elementor.** Reported from outside, as a Lighthouse score of 96 on
+  an Elementor build, and it was real.
+
+  The target is filtered onto `the_content`. It was filtered on at priority 1,
+  which is before a page builder gets to it. Elementor renders from its own
+  stored data and replaces the content string wholesale at priority 9, so the
+  target was discarded while the link, printed separately on `wp_body_open`,
+  went out regardless. A skip link that resolves to nothing is worse than no
+  skip link: it looks like the problem has been dealt with. This plugin's own
+  `link-anchor-broken` check reports exactly that on other people's sites.
+
+  Filtering last instead of first fixes it for any builder that works this way,
+  not only that one, and incidentally puts the span after `wpautop`, which at
+  priority 1 was free to wrap it in a paragraph of its own.
+
+- Two things the fix got wrong on the way, both worth recording because the
+  second one is a fact about WordPress rather than about this plugin.
+
+  The first attempt also made the target conditional on the link having been
+  printed, to enforce the "printed as a pair or not at all" rule the class
+  docblock claimed. That removed the target from every block-theme page. The
+  hooks do not fire in a fixed order: under a classic template `wp_body_open`
+  comes first, but under a block theme the template is assembled before the
+  body is emitted, so `the_content` runs first. Measured on a stock Twenty
+  Twenty-Five install rather than assumed. The claim has been corrected to what
+  the class can actually promise.
+
+  What remains is one benign asymmetry: a template that renders content without
+  opening the body — Elementor's header-footer template on a block theme —
+  leaves a target with no link pointing at it. An empty span of zero height,
+  outside the tab order, that no checker reports. The harmful direction is the
+  one that is fixed.
+
+- `SkipLink` had no test. It has one now, asserting the filter priority rather
+  than the output, because the output was never wrong. It was confirmed to fail
+  when the priority is put back to 1.
+
 ## [1.0.5] - 2026-10-12
 
 The listing says what the plugin does, the plugin says the add-on exists, and

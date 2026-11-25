@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WOWStudio Accessibility Remediation 1.0.5\n"
+"Project-Id-Version: WOWStudio Accessibility Remediation 1.0.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wowstudio-accessibility-remediation\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2038,19 +2038,19 @@ msgstr ""
 msgid "Takes effect the next time a page loads: theme support is declared long before a settings request arrives, so it cannot change the request that switched it on. A theme that already declares support needs nothing from this."
 msgstr ""
 
-#: src/SiteFixes/Fixes/SkipLink.php:89
+#: src/SiteFixes/Fixes/SkipLink.php:119
 msgid "Add a skip link"
 msgstr ""
 
-#: src/SiteFixes/Fixes/SkipLink.php:100
+#: src/SiteFixes/Fixes/SkipLink.php:130
 msgid "Puts a \"Skip to content\" link at the very start of every page, visible only while it has keyboard focus, and places the target it jumps to at the start of your content. Without one, reaching the article past a large menu can take dozens of key presses on every page."
 msgstr ""
 
-#: src/SiteFixes/Fixes/SkipLink.php:122
-msgid "Needs your theme to call wp_body_open(), which themes have done since WordPress 5.2; a much older theme may not, and then nothing is printed. The link lands at the start of your post content rather than at your theme's own main element, so on a page built entirely out of widgets it may skip less than you expect. If your theme already has a skip link, you will now have two."
+#: src/SiteFixes/Fixes/SkipLink.php:152
+msgid "Needs your theme to call wp_body_open(), which themes have done since WordPress 5.2; a much older theme, or a page builder supplying its own page template, may not, and then nothing is printed at all. The link lands at the start of your post content rather than at your theme's own main element, so on a page built entirely out of widgets it may skip less than you expect. If your theme already has a skip link, you will now have two."
 msgstr ""
 
-#: src/SiteFixes/Fixes/SkipLink.php:152
+#: src/SiteFixes/Fixes/SkipLink.php:197
 msgid "Skip to content"
 msgstr ""
 

@@ -9,10 +9,12 @@ declare( strict_types = 1 );
 
 namespace WOWStudio\AccessibilityKit\Tests\Unit;
 
+use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use WOWStudio\AccessibilityKit\SiteFixes\Fixes\CommentAndSearchLabels;
 use WOWStudio\AccessibilityKit\SiteFixes\Fixes\DownloadFileInfo;
 use WOWStudio\AccessibilityKit\SiteFixes\Fixes\NewWindowWarning;
+use WOWStudio\AccessibilityKit\SiteFixes\Fixes\SkipLink;
 use WOWStudio\AccessibilityKit\SiteFixes\ProvidesCss;
 use WOWStudio\AccessibilityKit\SiteFixes\RunsInBrowser;
 use WOWStudio\AccessibilityKit\SiteFixes\SiteFix;
@@ -39,8 +41,54 @@ use WOWStudio\AccessibilityKit\Tests\TestCase;
  * @covers \WOWStudio\AccessibilityKit\SiteFixes\Fixes\StripRedundantTitle
  * @covers \WOWStudio\AccessibilityKit\SiteFixes\Fixes\LabelFormFields
  * @covers \WOWStudio\AccessibilityKit\SiteFixes\Fixes\EmptySearchMessage
+ * @covers \WOWStudio\AccessibilityKit\SiteFixes\Fixes\SkipLink
  */
 final class SiteFixesTest extends TestCase {
+	/**
+	 * Elementor's priority on `the_content`, which is the number that matters.
+	 *
+	 * @var int
+	 */
+	private const BUILDER_PRIORITY = 9;
+
+	/**
+	 * The skip target has to be filtered on after a page builder, not before.
+	 *
+	 * This shipped at priority 1 from 0.19.0 to 1.0.5. A builder that renders
+	 * from its own storage replaces the content string at priority 9 and the
+	 * target went with it, so on an Elementor page the link was printed
+	 * pointing at an id that was not on the page — the exact broken skip link
+	 * this plugin reports on other people's sites.
+	 *
+	 * The assertion is on the priority rather than on the output because the
+	 * fault was never in what `place_target()` returns. It returns the right
+	 * string either way; it was handed to the wrong stage of the pipeline.
+	 *
+	 * @return void
+	 */
+	public function test_the_skip_target_is_filtered_after_a_builder_can_replace_the_content(): void {
+		$priority = null;
+
+		Filters\expectAdded( 'the_content' )
+			->once()
+			->whenHappen(
+				static function ( $callback, $added_priority ) use ( &$priority ): void {
+					$priority = $added_priority;
+				}
+			);
+
+		( new SkipLink() )->hooks();
+
+		$this->assertNotNull( $priority, 'The skip target is not filtered onto the_content at all.' );
+		$this->assertGreaterThan(
+			self::BUILDER_PRIORITY,
+			$priority,
+			'The skip target must be placed after a page builder has replaced the content, or the link points at an id that is not on the page.'
+		);
+	}
+
+	/**
+
 
 	/**
 	 * Adds the helpers these fixes reach for.

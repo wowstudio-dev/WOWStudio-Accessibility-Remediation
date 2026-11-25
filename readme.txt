@@ -4,7 +4,7 @@ Tags: accessibility, wcag, a11y, alt text, accessibility checker
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ In WordPress's own alt text field on the media item. It therefore applies everyw
 7. The setup, on first activation. Three steps, none of them mandatory, and nothing switched on for you.
 
 == Changelog ==
+
+= 1.0.6 =
+* Fixed: the skip link pointed at nothing on pages built with Elementor. The target it jumps to was added to your content before the page builder rendered, and the builder then replaced that content with its own, taking the target with it. The link was printed either way, so the result was a skip link that looked right and did nothing — which is the same fault this plugin reports on other people's sites. The target is now placed after any builder has finished.
 
 = 1.0.5 =
 * The listing now says what the plugin does rather than only what it is called. Nobody searches for "remediation".
