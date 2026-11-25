@@ -18,6 +18,20 @@ everything below is now the per-release routine.
       release being shipped. These drifted apart once already (readme listed
       0.1.0 while the tag read 0.7.0) because CHANGELOG.md is the file anyone
       actually edits; check both.
+- [ ] The newest `== Changelog ==` section **opens with one prose sentence**,
+      before its bullets. That sentence is load-bearing downstream:
+      `plugin-release.yml` copies the section verbatim into the GitHub release
+      body, and the website's `scripts/sync-release.mjs` takes the first
+      non-bullet line of that body as the headline for the changelog entry, the
+      release blog post's description, and the version summary wherever a page
+      shows one.
+
+      1.0.5 and 1.0.6 were written as bullets and nothing else. With no prose to
+      find, the rule seized on the workflow's own trailing link and published
+      "Install it from the WordPress Plugin Directory" as the headline of both
+      releases. The script now refuses bullet, quote, image and link-only lines,
+      but no script can write the summary: both headlines were put in by hand
+      afterwards. Write the sentence here and nothing downstream needs a human.
 - [ ] Plugin Check passes with no errors (`npm run plugin-check`).
 
       This runs against the **built** plugin in `dist/`, not the working tree.
@@ -163,37 +177,50 @@ Two obligations that outlive the release, both grounds for removal if dropped:
 
 ## Known, accepted Plugin Check warnings
 
-Plugin Check reports **0 errors** and 9 warnings. Two are in
-`src/Db/IssueRepository.php`, and both are the same finding:
-`PluginCheck.Security.DirectDB.UnescapedDBParameter` on `add_many()` and
-`find_by_scan()`.
+Re-run 2026-11-25 against the 1.0.6 build with Plugin Check 2.2.0:
+**0 errors and 2 warnings**, both on `readme.txt`, and both produced by the
+directory title rather than by any code.
 
-Those two statements genuinely cannot be written as a fixed literal: one builds a
-multi-row INSERT whose placeholder count depends on the batch size, the other
-builds a WHERE clause from the filters the caller passed. In both cases the
-assembled string contains **only** placeholder fragments, and every value —
-including the table name, via the `%i` identifier placeholder — goes through
-`$wpdb->prepare()`. `IssueRepositoryTest` asserts this directly, including that
-an injection attempt in a rule ID lands in the bound values and never in the SQL.
+- `mismatched_plugin_name` — the readme's `=== … ===` title carries the search
+  terms ("WCAG Checker, Scanner and Alt Text Fixes") while the `Plugin Name:`
+  header stays short. The first is what the directory lists and the second is
+  what sits in the admin plugin list, so they are meant to differ.
+- `trademarked_term`, "the restricted term `wc`". There is no "wc" in the title;
+  the sniff is matching the substring inside **WCAG**. It cannot be fixed short
+  of dropping the standard's name from a plugin about that standard.
 
-If either method is edited, re-read it before assuming the warning is still
-benign.
+Both are tolerated on live listings. Equalize Digital's Accessibility Checker
+carries the same pair — its directory title differs from its header name and
+contains "WCAG" — at 10,000 active installs, checked against the directory API
+on 2026-11-25. Neither warning blocks a release.
 
-The other seven are `PluginCheck.CodeAnalysis.AIProvider.DirectIntegration` on
-the provider adapters in `src/AI/Providers/` (OpenAI 1, Gemini 2, Anthropic 2,
-OpenRouter 2). Plugin Check now nudges plugins
-towards the AI client WordPress 7.0 ships rather than calling providers
-directly, and that nudge is right. We already follow it: `AI\AiClientBridge`
-prefers `WordPress\AiClient\AiClient` whenever it is present and configured,
-and only falls back to the direct adapters otherwise.
+- [ ] If a **third** warning appears, read it rather than adding it here. These
+      two are understood; a new one is not.
 
-The adapters exist because the plugin supports WordPress 6.8, and the AI client
-does not exist before 7.0. They are the documented graceful degradation, not a
-shortcut around the core API.
+### Two warnings this section used to carry
 
-- [ ] **TODO(human)** Be ready to explain this to a WordPress.org reviewer, and
-      revisit once the supported floor rises to 7.0 — at that point the direct
-      adapters can be dropped entirely.
+Kept because the reasoning is still worth having, not because the warnings are.
+
+`PluginCheck.Security.DirectDB.UnescapedDBParameter` fired on
+`IssueRepository::add_many()` and `::find_by_scan()`. It no longer fires, and
+both methods are unchanged — so the reasoning is still true, merely unreported.
+Neither statement can be written as a fixed literal: one builds a multi-row
+INSERT whose placeholder count depends on the batch size, the other a WHERE
+clause from the filters the caller passed. In both, the assembled string holds
+**only** placeholder fragments, and every value — including the table name, via
+the `%i` identifier placeholder — goes through `$wpdb->prepare()`.
+`IssueRepositoryTest` asserts this directly, including that an injection attempt
+in a rule ID lands in the bound values and never in the SQL. If either method is
+edited, re-read it: a sniff that has gone quiet is not a sniff that is guarding.
+
+`PluginCheck.CodeAnalysis.AIProvider.DirectIntegration` fired seven times on
+`src/AI/Providers/`. That directory does not exist — the AI feature was removed
+entirely in 0.16.0 — and this section nonetheless carried a **TODO(human)** to
+be ready to defend those adapters to a reviewer. The adapters went on
+2026-09-06, sixteen days before the plugin was listed at all — so no reviewer
+could ever have asked, and a release-runner following this section would have
+arrived prepared to defend code that never shipped. When a feature goes, its
+checklist entry goes in the same commit.
 
 ## Tooling debt
 
